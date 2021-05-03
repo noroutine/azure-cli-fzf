@@ -15,6 +15,26 @@ python setup.py bdist_wheel
 az extension add --yes  --source dist/fzf-1.0.3-py2.py3-none-any.whl
 ```
 
+### Usage
+
+Long version
+
+```
+az fzf -h
+```
+
+Short version
+```
+az fzf <command>
+
+Commands:
+    customer     : Select default customer.
+    group        : Select default resource group.
+    install      : Download and install the fzf command.
+    location     : Select default location.
+    subscription : Select default subscription.
+```
+
 ### Searching by customer name
 
 YAML file to map customer names and subscription id should be a simple dictionary:

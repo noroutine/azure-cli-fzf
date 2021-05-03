@@ -50,3 +50,7 @@ helps['fzf subscription'] = """
     type: command
     short-summary: select default subscription.
 """
+helps['fzf customer'] = """
+    type: command
+    short-summary: select default customer.
+"""
