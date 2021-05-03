@@ -16,3 +16,4 @@ def load_command_table(self, _):
         group.custom_command('group', 'fzf_group')
         group.custom_command('location', 'fzf_location')
         group.custom_command('subscription', 'fzf_subscription')
+        group.custom_command('customer', 'fzf_customer')

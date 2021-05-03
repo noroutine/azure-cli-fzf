@@ -33,3 +33,6 @@
 
 ## 1.0.2
 * Add experimental flag to indicate lack of support from Microsoft, as this is a side project.
+
+## 1.0.3
+* Support for loading customer subscriptions from YAML file

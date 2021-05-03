@@ -17,6 +17,8 @@ import zipfile
 
 import requests
 
+import yaml
+
 from azure.cli.core.api import get_config_dir
 from knack.log import get_logger
 from knack.util import CLIError
@@ -345,6 +347,61 @@ def fzf_subscription(cmd, fzf_filter=None, no_default=False):
         subscription = result.split('|')[-2].strip()
         if not no_default:
             LOGGER.info('setting default subscription')
+            Profile(cli_ctx=cmd.cli_ctx).set_active_subscription(subscription)
+        return next((s for s in subscriptions if s["id"] == subscription))
+
+    return None
+
+def fzf_customer(cmd, fzf_filter=None, no_default=False):
+    """
+    Use fzf to quickly filter and select your current customer.
+    """
+    from azure.cli.core._profile import Profile
+    from azure.cli.core.api import load_subscriptions
+
+    subscriptions = load_subscriptions(cmd.cli_ctx, all_clouds=False, refresh=False)
+    if "AZ_FZF_CUSTOMER_SUBSCRIPTIONS" not in os.environ:
+        raise CLIError('Specify the path to subscriptions.yml in '
+                       'AZ_FZF_CUSTOMER_SUBSCRIPTIONS environment variable')
+
+    subscriptions_yml_path = os.environ['AZ_FZF_CUSTOMER_SUBSCRIPTIONS']
+    if not os.path.isfile(subscriptions_yml_path):
+        raise CLIError('"%s" is not a file' % subscriptions_yml_path)
+
+    customer_subscriptions = {}
+    try:
+        with open(subscriptions_yml_path) as subscriptions_yml:
+            customer_subscriptions = yaml.safe_load(subscriptions_yml)
+    except yaml.YAMLError as exc:
+        error_msg = ""
+        if hasattr(exc, 'problem_mark'):
+            if exc.context != None:
+                error_msg = ('  parser says\n' + str(exc.problem_mark) + '\n  ' +
+                    str(exc.problem) + ' ' + str(exc.context) +
+                    '\nPlease correct data and retry.')
+            else:
+                error_msg = ('  parser says\n' + str(exc.problem_mark) + '\n  ' +
+                    str(exc.problem) + '\nPlease correct data and retry.')
+        else:
+            error_msg = ("Something went wrong while parsing yaml file")
+        raise CLIError('Error parsing %s\n%s' % (subscriptions_yml_path, error_msg))
+
+    except OSError as exc:
+        print()
+        raise CLIError('Something went wrong while opening "%s": %s' % (subscriptions_yml_path, exc))
+    
+    if not customer_subscriptions:
+        raise CLIError('No subscriptions found in subscriptions.yml')
+
+    headers = ["Customer", "Name", "ID"]
+    subs_sorted = sorted(customer_subscriptions, key=lambda i: i["customer"])
+    subs_list = [[sub["customer"], sub["name"], sub["id"]] for sub in subs_sorted]
+    result = _fzf(_fzf_table(subs_list, headers), header_lines=2, fzf_filter=fzf_filter)
+
+    if result:
+        subscription = result.split('|')[-2].strip()
+        if not no_default:
+            LOGGER.info('setting default customer')
             Profile(cli_ctx=cmd.cli_ctx).set_active_subscription(subscription)
         return next((s for s in subscriptions if s["id"] == subscription))
 
